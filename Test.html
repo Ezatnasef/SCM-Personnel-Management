@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCM Personnel Management System - FINAL</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* Global & Reset */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f0f0f5;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 0;
+            color: #333;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            min-height: 100vh;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Splash Screen */
+        #splash-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #5d4037; color: white; display: flex;
+            flex-direction: column; justify-content: center; align-items: center;
+            z-index: 1000; transition: opacity 0.5s;
+        }
+        .splash-logo { font-size: 3em; margin-bottom: 20px; }
+        .loading-text { font-size: 1.1em; }
+
+        /* Login Screen ( unchanged ) */
+        .login-section { padding: 40px 20px; text-align: center; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+        .login-input { width: 90%; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #ffffff; color: #333; font-size: 1.1em; text-align: right; }
+        .btn-login {
+            background: linear-gradient(135deg, #5d4037 0%, #795548 100%);
+            color: white; margin-top: 30px; padding: 18px; font-size: 1.2em; font-weight: bold;
+            border: none; border-radius: 8px; cursor: pointer; width: 95%;
+            box-shadow: 0 4px 10px rgba(93, 64, 55, 0.3); transition: opacity 0.2s;
+        }
+        .btn-login:active { opacity: 0.8; }
+        .intro-text { color: #777; margin-bottom: 50px; font-size: 0.9em; }
+
+        /* Header and Content */
+        .header { background-color: #5d4037; color: white; padding: 15px; text-align: center; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); font-size: 1.2em; font-weight: bold; }
+        .content-area { flex-grow: 1; overflow-y: auto; padding-bottom: 70px; }
+
+        /* Metrics Dashboard Styling */
+        .metrics-dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            padding: 15px 10px;
+            background-color: #f9f9f9;
+            border-bottom: 1px solid #eee;
+        }
+        .metric-tile {
+            background-color: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+            font-size: 0.8em;
+        }
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .metric-value.on-route { color: #28a745; }
+        .metric-value.idle { color: #ffc107; }
+        .metric-value.off-duty { color: #6c757d; }
+
+        /* Search & Filter Bar */
+        .search-container { padding: 10px; background-color: #ffffff; border-bottom: 1px solid #eee; }
+        .search-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 20px; font-size: 1em; text-align: right; box-sizing: border-box; margin-bottom: 10px; }
+        .filter-buttons { display: flex; justify-content: space-around; }
+        .filter-btn {
+            background-color: #f0f0f5;
+            color: #5d4037;
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .filter-btn.active {
+            background-color: #5d4037;
+            color: white;
+            border-color: #5d4037;
+        }
+        
+        /* List & Details (unchanged) */
+        .list-title { padding: 10px 15px; font-size: 0.9em; color: #777; background-color: #f9f9f9; }
+        .personnel-card { background-color: white; border-bottom: 1px solid #eee; margin: 0; padding: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background-color 0.2s; }
+        .personnel-card:hover { background-color: #f5f5f5; }
+        .name { font-size: 1.1em; font-weight: bold; color: #333; }
+        .details { font-size: 0.8em; color: #777; margin-top: 5px; }
+        .status-badge { 
+            padding: 4px 8px; border-radius: 4px; font-size: 0.7em; font-weight: bold; color: white; min-width: 70px; text-align: center; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .status-On_Route { background-color: #28a745; } 
+        .status-Idle { background-color: #ffc107; color: #333; } 
+        .status-Off_Duty { background-color: #6c757d; }
+        .status-Unknown { background-color: #dc3545; }
+        
+        /* Settings Styling (unchanged) */
+        .settings-group { background-color: white; margin: 10px; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); }
+        .settings-group h4 { color: #5d4037; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-top: 0; margin-bottom: 15px; font-size: 1.1em; }
+        .setting-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f9f9f9; font-size: 0.95em; }
+        .setting-value { font-weight: bold; color: #333; }
+
+        /* Monitoring Screen Styling */
+        #monitoring-screen {
+            padding: 20px;
+            text-align: center;
+        }
+        .map-mock {
+            height: 250px;
+            background-color: #e0e0e0;
+            background-image: url('https://via.placeholder.com/400x250/78909c/FFFFFF?text=Mock+Map+Tracking');
+            background-size: cover;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+            font-weight: bold;
+        }
+        .monitoring-info {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            text-align: right;
+            margin-bottom: 15px;
+        }
+        .monitoring-info h5 {
+            color: #5d4037;
+            margin-top: 0;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 5px;
+        }
+
+        /* Bottom Navigation Bar */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 400px; background-color: #ffffff; border-top: 1px solid #eee; display: flex; justify-content: space-around; padding: 8px 0; box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1); }
+        .nav-item { text-align: center; cursor: pointer; color: #999; transition: color 0.2s; padding: 5px; }
+        .nav-item i { font-size: 1.4em; display: block; margin-bottom: 2px; }
+        .nav-item.active { color: #5d4037; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <div id="splash-screen">
+        <i class="fas fa-shipping-fast splash-logo"></i>
+        <h2>SCM Dashboard</h2>
+        <p class="loading-text">جاري تحميل النظام...</p>
+    </div>
+
+    <div id="login-screen" class="login-section" style="display:none;">
+        <h2 style="color: #5d4037; margin-bottom: 10px;">نظام إدارة سلسلة الإمداد</h2>
+        <p class="intro-text">الرجاء إدخال بيانات الدخول المعتمدة</p>
+
+        <input class="login-input" type="text" id="username-input" placeholder="رقم الموظف/اسم المستخدم">
+        <input class="login-input" type="password" id="password-input" placeholder="كلمة المرور">
+        
+        <button class="btn-login" onclick="login()">
+            <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+        </button>
+
+        <div style="margin-top: 40px; font-size: 0.8em; color: #999;">
+            <p style="font-weight: bold; color: #555;">مقدم كجزء من مشروع عملي:</p>
+            <p><strong>الطالب:</strong> قمر محمد السيد ابو النصر (ID: 3241248)</p>
+            <p><strong>إشراف:</strong> د. سلمي علي</p>
+            <p style="margin-top: 10px;">جامعة الدلتا للعلوم والتكنولوجيا</p>
+        </div>
+    </div>
+
+
+    <div class="header" id="app-header" style="display:none;">
+        لوحة تحكم موظفي SCM
+    </div>
+    
+    <div id="home-screen" class="content-area" style="display:none;">
+        
+        <div class="metrics-dashboard" id="metrics-dashboard">
+            </div>
+
+        <div class="search-container">
+            <input type="text" id="search-input" class="search-input" placeholder="ابحث بالاسم أو رقم المركبة..." onkeyup="filterPersonnel()">
+            
+            <div class="filter-buttons" id="filter-buttons">
+                </div>
+        </div>
+        
+        <p class="list-title" id="list-count-title">عرض 80 موظف</p>
+        <div id="personnel-list">
+            </div>
+    </div>
+
+    <div id="details-screen" class="content-area" style="display:none;">
+        <div id="person-details-content" style="padding: 20px 20px 0 20px;">
+            </div>
+        <div style="padding: 20px;">
+            <button onclick="showScreen('home-screen')" style="width: 100%; padding: 15px; background-color: #5d4037; color: white; border: none; border-radius: 8px; font-size: 1.1em;">
+                <i class="fas fa-arrow-right"></i> العودة للقائمة
+            </button>
+        </div>
+    </div>
+    
+    <div id="monitoring-screen" class="content-area" style="display:none;">
+        <h3 style="color: #5d4037; padding: 20px 20px 10px 20px; text-align: right;">لوحة مراقبة الأسطول والموقع</h3>
+        <div class="map-mock">
+             <span style="background-color: rgba(255, 255, 255, 0.8); padding: 10px; border-radius: 5px;">خريطة وهمية: يتم تتبع الموقع</span>
+        </div>
+        
+        <div style="padding: 0 20px;">
+            <div class="monitoring-info">
+                <h5><i class="fas fa-route"></i> ملخص حركة الأسطول</h5>
+                <div class="setting-item"><span>إجمالي المركبات في الحركة:</span><span class="setting-value on-route" id="mon-on-route">--</span></div>
+                <div class="setting-item"><span>آخر تحديث GPS ناجح:</span><span class="setting-value">منذ 45 ثانية</span></div>
+            </div>
+             <div class="monitoring-info">
+                <h5><i class="fas fa-warehouse"></i> المناطق الحالية الحرجة</h5>
+                <div class="setting-item"><span>مركبات بالقرب من مستودع X:</span><span class="setting-value">5</span></div>
+                <div class="setting-item"><span>مركبات في انتظار تحميل:</span><span class="setting-value idle">12</span></div>
+            </div>
+            <button onclick="alert('تم تحديث البيانات!')" style="width: 100%; padding: 10px; background-color: #5d4037; color: white; border: none; border-radius: 5px; margin-top: 10px;">
+                <i class="fas fa-sync-alt"></i> تحديث يدوي
+            </button>
+        </div>
+    </div>
+    
+    <div id="settings-screen" class="content-area" style="display:none;">
+        <div class="settings-group">
+            <h4><i class="fas fa-id-card"></i> بيانات المستخدم</h4>
+            <div class="setting-item">
+                <span>الاسم الكامل:</span>
+                <span class="setting-value">قمر محمد السيد ابو النصر</span>
+            </div>
+            <div class="setting-item">
+                <span>الرقم الجامعي/الوظيفي:</span>
+                <span class="setting-value">3241248</span>
+            </div>
+            <div class="setting-item">
+                <span>الدور في النظام:</span>
+                <span class="setting-value" style="color:#5d4037;">مشرف / متابع</span>
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <h4><i class="fas fa-info-circle"></i> معلومات التطبيق</h4>
+            <div class="setting-item">
+                <span>الإصدار:</span>
+                <span class="setting-value">V1.0.1 Beta</span>
+            </div>
+            <div class="setting-item">
+                <span>حالة قاعدة البيانات:</span>
+                <span class="setting-value" style="color:#28a745;">متصل (Mock Data)</span>
+            </div>
+        </div>
+        
+        <div style="padding: 10px;">
+            <button onclick="logout()" style="width: 100%; padding: 15px; background-color: #dc3545; color: white; border: none; border-radius: 8px; font-size: 1.1em;">
+                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+            </button>
+        </div>
+    </div>
+
+    <div class="bottom-nav" id="app-nav" style="display:none;">
+        <div class="nav-item active" id="nav-home" onclick="showScreen('home-screen')">
+            <i class="fas fa-list-ul"></i>
+            <span>القائمة</span>
+        </div>
+        <div class="nav-item" id="nav-monitoring" onclick="showScreen('monitoring-screen')">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>مراقبة</span>
+        </div>
+        <div class="nav-item" id="nav-settings" onclick="showScreen('settings-screen')">
+            <i class="fas fa-cog"></i>
+            <span>إعدادات</span>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- 1. وظيفة إنشاء البيانات الوهمية (Mock Data Generator) ---
+    function generateMockData(count) {
+        const statuses = ['On Route', 'Idle', 'Off Duty', 'On Route', 'Idle']; 
+        const locations = ['القاهرة', 'الجيزة', 'الإسكندرية', 'المنصورة', 'طريق الدائري', 'مستودع X'];
+        const vehicles = ['Truck A-', 'Van B-', 'Forklift C-', 'Dispatcher-'];
+        const data = [];
+
+        for (let i = 1; i <= count; i++) {
+            const status = statuses[Math.floor(Math.random() * statuses.length)];
+            const location = locations[Math.floor(Math.random() * locations.length)];
+            const vehiclePrefix = vehicles[Math.floor(Math.random() * vehicles.length)];
+            const paddedIndex = String(i).padStart(3, '0');
+
+            data.push({
+                id: `SCM${paddedIndex}`,
+                name: `موظف SCM ${paddedIndex}`,
+                contact_phone: `01XXXXXXXX${Math.floor(Math.random() * 10)}`, 
+                assigned_vehicle: (vehiclePrefix === 'Dispatcher-') ? 'مكتب المراقبة' : `${vehiclePrefix}${Math.floor(Math.random() * 99) + 1}`,
+                current_status: status,
+                location: status === 'Off Duty' ? 'راحة' : location
+            });
+        }
+        return data;
+    }
+
+    const mockPersonnelData = generateMockData(80);
+    const PERSONNEL_STATUSES = ['All', 'On Route', 'Idle', 'Off Duty'];
+
+    // --- 2. الثوابت والمتغيرات ---
+    const listContainer = document.getElementById('personnel-list');
+    const splashScreen = document.getElementById('splash-screen');
+    const appHeader = document.getElementById('app-header');
+    const appNav = document.getElementById('app-nav');
+    const screens = ['login-screen', 'home-screen', 'details-screen', 'settings-screen', 'monitoring-screen'];
+    const navItems = document.querySelectorAll('.nav-item');
+    const metricsDashboard = document.getElementById('metrics-dashboard');
+    const filterButtonsContainer = document.getElementById('filter-buttons');
+    let currentFilter = 'All';
+
+
+    // --- 3. وظائف التنقل (Screen Management) ---
+
+    function showScreen(screenId) {
+        screens.forEach(id => {
+            const screenElement = document.getElementById(id);
+            if (screenElement) screenElement.style.display = 'none';
+        });
+        
+        const requestedScreen = document.getElementById(screenId);
+        if (requestedScreen) requestedScreen.style.display = (screenId === 'login-screen') ? 'flex' : 'block';
+
+        const isOperationalScreen = screenId !== 'login-screen';
+        appHeader.style.display = isOperationalScreen ? 'block' : 'none';
+        appNav.style.display = isOperationalScreen ? 'flex' : 'none';
+
+        navItems.forEach(item => item.classList.remove('active'));
+        if (screenId === 'home-screen') {
+            document.getElementById('nav-home').classList.add('active');
+        } else if (screenId === 'monitoring-screen') {
+            document.getElementById('nav-monitoring').classList.add('active');
+             updateMonitoringScreen(); 
+        } else if (screenId === 'settings-screen') {
+            document.getElementById('nav-settings').classList.add('active');
+        }
+    }
+
+    // --- 4. وظائف المستخدم (Authentication) ---
+
+    function login() {
+        const username = document.getElementById('username-input').value;
+        const password = document.getElementById('password-input').value;
+        
+        if (username.trim() !== '' && password.trim() !== '') {
+             showScreen('home-screen');
+        } else {
+            alert("الرجاء إدخال اسم المستخدم وكلمة المرور.");
+        }
+    }
+
+    function logout() {
+        if (confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
+            document.getElementById('username-input').value = '';
+            document.getElementById('password-input').value = '';
+            showScreen('login-screen');
+        }
+    }
+
+    // --- 5. وظائف العرض والتحليل (Rendering, Metrics, Filtering) ---
+
+    function calculateMetrics() {
+        const total = mockPersonnelData.length;
+        const onRoute = mockPersonnelData.filter(p => p.current_status === 'On Route').length;
+        const idle = mockPersonnelData.filter(p => p.current_status === 'Idle').length;
+        const offDuty = mockPersonnelData.filter(p => p.current_status === 'Off Duty').length;
+        return { total, onRoute, idle, offDuty };
+    }
+
+    function updateMetricsDashboard() {
+        const metrics = calculateMetrics();
+        metricsDashboard.innerHTML = `
+            <div class="metric-tile">
+                <div class="metric-value">${metrics.total}</div>
+                <div><i class="fas fa-users"></i> الإجمالي</div>
+            </div>
+            <div class="metric-tile">
+                <div class="metric-value on-route">${metrics.onRoute}</div>
+                <div><i class="fas fa-truck"></i> في الطريق</div>
+            </div>
+            <div class="metric-tile">
+                <div class="metric-value idle">${metrics.idle}</div>
+                <div><i class="fas fa-clock"></i> جاهز/خامل</div>
+            </div>
+        `;
+        document.getElementById('mon-on-route').textContent = metrics.onRoute;
+    }
+
+    function setupFilterButtons() {
+        filterButtonsContainer.innerHTML = '';
+        PERSONNEL_STATUSES.forEach(status => {
+            const btn = document.createElement('button');
+            btn.classList.add('filter-btn');
+            btn.textContent = status === 'All' ? 'الكل' : (status === 'On Route' ? 'على الطريق' : (status === 'Idle' ? 'جاهز' : 'خارج الخدمة'));
+            btn.onclick = () => {
+                currentFilter = status;
+                filterPersonnel();
+            };
+            filterButtonsContainer.appendChild(btn);
+        });
+    }
+    
+    function updateFilterButtonUI() {
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            const statusText = btn.textContent;
+            let status;
+            if (statusText === 'الكل') status = 'All';
+            else if (statusText === 'على الطريق') status = 'On Route';
+            else if (statusText === 'جاهز') status = 'Idle';
+            else if (statusText === 'خارج الخدمة') status = 'Off Duty';
+
+            if (status === currentFilter) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    function displayPersonnelList(data) {
+        listContainer.innerHTML = '';
+        const listCountTitle = document.getElementById('list-count-title');
+        
+        if (data.length === 0) {
+            listContainer.innerHTML = '<p style="text-align: center; color: #777; margin-top: 20px;">لا يوجد نتائج مطابقة.</p>';
+        }
+        
+        data.forEach(person => {
+            listContainer.appendChild(renderPersonnelCard(person));
+        });
+        listCountTitle.textContent = `عرض ${data.length} موظف`;
+        updateFilterButtonUI();
+    }
+
+    function filterPersonnel() {
+        const searchTerm = document.getElementById('search-input').value.toLowerCase();
+        
+        let filteredData = mockPersonnelData;
+
+        // 1. التصفية حسب الحالة (Filtering by Status)
+        if (currentFilter !== 'All') {
+            filteredData = filteredData.filter(p => p.current_status === currentFilter);
+        }
+        
+        // 2. التصفية حسب البحث النصي (Text Search)
+        filteredData = filteredData.filter(person => 
+            (person.name && person.name.toLowerCase().includes(searchTerm)) ||
+            (person.assigned_vehicle && person.assigned_vehicle.toLowerCase().includes(searchTerm))
+        );
+        
+        displayPersonnelList(filteredData);
+    }
+    
+    const renderPersonnelCard = (person) => {
+        const card = document.createElement('div');
+        card.classList.add('personnel-card');
+        card.onclick = () => showPersonnelDetails(person);
+
+        const statusText = person.current_status || 'Unknown';
+        const statusClass = statusText.replace(/\s/g, '_');
+        
+        card.innerHTML = `
+            <div class="info">
+                <div class="name">${person.name || 'غير محدد'}</div>
+                <div class="details">المركبة: ${person.assigned_vehicle || 'N/A'} | هاتف: ${person.contact_phone}</div>
+            </div>
+            <span class="status-badge status-${statusClass}">${statusText}</span>
+        `;
+        return card;
+    };
+    
+    function showPersonnelDetails(person) {
+        const detailsContent = document.getElementById('person-details-content');
+        
+        detailsContent.innerHTML = `
+            <h3 style="text-align: right; color: #5d4037; margin-bottom: 20px;">تفاصيل ${person.name}</h3>
+
+            <div class="detail-item settings-group" style="padding: 10px;">
+                <div class="setting-item" style="border-bottom:none;">
+                    <span>الحالة الحالية:</span>
+                    <span class="status-badge status-${person.current_status.replace(/\s/g, '_')}">${person.current_status}</span>
+                </div>
+            </div>
+            
+            <div class="detail-item settings-group">
+                <div class="setting-item"><span>رقم التواصل:</span><span class="setting-value" style="color: #0077B6;"><a href="tel:${person.contact_phone}"><i class="fas fa-phone"></i> ${person.contact_phone}</a></span></div>
+                <div class="setting-item"><span>المركبة المسندة:</span><span class="setting-value">${person.assigned_vehicle}</span></div>
+                <div class="setting-item"><span>آخر موقع معروف:</span><span class="setting-value">${person.location || 'غير متاح'}</span></div>
+            </div>
+
+            <button onclick="alert('تم إرسال تنبيه إلى ${person.name}')" style="width: 100%; padding: 12px; background-color: #ffc107; color: #333; border: none; border-radius: 5px; margin-top: 20px;">
+                <i class="fas fa-bell"></i> إرسال تنبيه فوري
+            </button>
+        `;
+        showScreen('details-screen');
+    }
+
+    function updateMonitoringScreen() {
+        const metrics = calculateMetrics();
+        document.getElementById('mon-on-route').textContent = metrics.onRoute;
+    }
+
+
+    // --- 6. التهيئة (Initialization) ---
+    window.onload = function() {
+        // 1. عرض الإحصائيات وأزرار الفلترة
+        updateMetricsDashboard();
+        setupFilterButtons();
+        
+        // 2. عرض القائمة المفلترة مبدئياً
+        filterPersonnel();
+        
+        // 3. إظهار Splash Screen لمدة ثانيتين (2000 مللي ثانية)
+        setTimeout(() => {
+            splashScreen.style.opacity = '0'; // يبدأ التلاشي
+            setTimeout(() => {
+                splashScreen.style.display = 'none'; // يختفي بعد انتهاء التلاشي (0.5 ثانية)
+                showScreen('login-screen');
+            }, 500);
+        }, 2000); // الشاشة ثابتة هنا لمدة ثانيتين قبل أن تبدأ عملية التلاشي
+    };
+</script>
+</body>
+</html>
